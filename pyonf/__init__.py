@@ -21,9 +21,21 @@ def _deep_update(in_dict, _update):
     return in_dict
 
 
+def _deep_key_replace(in_dict, old_str, new_str):
+    """
+        Recursively replace dict keys, returns the result
+    """
+    out_dict = {}
+    for key, val in in_dict.items():
+        if isinstance(key, str):
+            new_key = key.replace(old_str, new_str)
         else:
-            d[k] = v
-    return d
+            new_key = key
+        if isinstance(val, dict):
+            out_dict[new_key] = _deep_key_replace(val, old_str, new_str)
+        else:
+            out_dict[new_key] = val
+    return out_dict
 
 
 def _dict_to_args(in_dict):
@@ -45,36 +57,25 @@ def _dict_to_args(in_dict):
     return args
 
 
-def _args_to_dict(d_arg, d_orig={}):
+def _args_to_dict(in_args):
     """
         Convert dict of argparse arguments and values to nested dict
-
-        :param d_orig: used to infer original keys' name and type
 
         :Example:
         >>> _args_to_dict({"k1-k2-k3": v})
         {k1: {k2: {k3 : v}}}
 
     """
-    for arg, val in d_arg.items():
-        if "_" in arg:
-            d_ptr = d_arg
-            d_optr = d_orig
-            args = arg.split('_')
-            while args:
-                key, args = args[0], args[1:]
-                if [k for k in d_optr.keys() if str(k) == key]:
-                    key = [k for k in d_optr.keys() if str(k) == key].pop()
-                if not args or d_optr.get('_'.join([key]+args)):
-                    d_ptr[key] = val
-                    del d_arg[arg]
-                    break
-                else:
-                    if not d_ptr.get(key):
-                        d_ptr[key] = {}
-                    d_ptr = d_ptr[key]
-                    d_optr = d_optr.get(key, {})
-    return d_arg
+    out_dict = {}
+    for arg, val in in_args.items():
+        sub_dict_ptr = out_dict
+        for i, key in enumerate(arg.split("-")):
+            sub_dict_ptr[key] = {}
+            if i < len(arg.split("-")) - 1:
+                sub_dict_ptr = sub_dict_ptr[key]
+            else:
+                sub_dict_ptr[key] = val
+    return out_dict
 
 
 class ListAction(argparse.Action):
@@ -150,22 +151,30 @@ def pyonf(default_conf={}, mandatory_opts=[], argv=sys.argv[1:]):
             file=sys.stderr,
         )
         sys.exit(1)
-    log.debug(" content: %s" % conf)
 
     parser = argparse.ArgumentParser()
-    parser._positionals.title = 'Configuration file'
-    parser._optionals.title = 'Options'
-    parser.add_argument("conf_file",
-                        help="Path to YAML configuration file (optional)",
-                        type=argparse.FileType('r'),
-                        nargs='?')
+    parser._positionals.title = "Configuration file"
+    parser._optionals.title = "Options"
+    parser.add_argument(
+        "conf_file",
+        help="Path to YAML configuration file (optional)",
+        type=argparse.FileType("r"),
+        nargs="?",
+    )
+
+    # We must replace "-" by "_" in keys
+    conf = _deep_key_replace(conf, "-", "_")
+    log.debug(" content: %s" % conf)
 
     short_args = set()
-    for arg, val in sorted(_dict_to_args(conf)):
-        log.debug("building argparse for arg:%s val:%s type:%s" %
-                  (arg, val, type(val).__name__))
+    argvals = sorted(_dict_to_args(conf))
 
-        pargs = ["--"+arg]
+    for arg, val in argvals:
+        log.debug(
+            "building argparse for arg:%s val:%s type:%s", arg, val, type(val).__name__
+        )
+
+        pargs = ["--" + arg]
         if not arg[0] in short_args:
             pargs.append("-" + arg[0])
             short_args.add(arg[0])
@@ -209,11 +218,17 @@ def pyonf(default_conf={}, mandatory_opts=[], argv=sys.argv[1:]):
 
     log.debug("parsing command line")
 
+    available_args = [arg for arg, val in argvals]
     cli_args = parser.parse_args(argv)
-    cli_conf = {arg: val
-                for arg, val in vars(cli_args).items()
-                if arg != 'conf_file' and val is not None}
-    cli_conf = _args_to_dict(cli_conf, conf)
+
+    # Workaround dashes being replaced by underscore in argparse
+    cli_conf = {
+        arg: getattr(cli_args, arg.replace("-", "_"))
+        for arg in available_args
+        if hasattr(cli_args, arg.replace("-", "_"))
+        and getattr(cli_args, arg.replace("-", "_"))
+    }
+    cli_conf = _args_to_dict(cli_conf)
 
     log.debug(" config from command line is: %s", cli_conf)
 
