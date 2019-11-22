@@ -6,7 +6,7 @@ def readme():
         return f.read()
 
 setup(name='pyonf',
-      version='0.1',
+      version='0.2',
       description='Easy configuration from command line or YAML file',
       long_description=readme(),
       long_description_content_type="text/markdown",
