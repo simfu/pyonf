@@ -2,13 +2,14 @@ from setuptools import setup
 
 
 def readme():
-    with open('README.rst') as f:
+    with open('README.md') as f:
         return f.read()
 
 setup(name='pyonf',
       version='0.1',
       description='Easy configuration from command line or YAML file',
       long_description=readme(),
+      long_description_content_type="text/markdown",
       url='http://github.com/simfu/pyonf',
       author='simfu',
       author_email='simfu@free.fr',
