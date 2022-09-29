@@ -115,12 +115,12 @@ user: foo
 password: changeme
 debug: false
 """
-conf = pyonf(defaulf_configuration)
+conf = pyonf(default_configuration)
 print(conf)
 
 # Using a YAML file
 default_configuration = "/etc/myapp.conf"
-conf = pyonf(defaulf_configuration)
+conf = pyonf(default_configuration)
 print(conf)
 ```
 
@@ -132,17 +132,17 @@ password: changeme
 debug: false
 level: 3
 """
-conf = pyonf(defaulf_configuration)
+conf = pyonf(default_configuration)
 print(conf)
 ```
 
 i.e.:
 ```
-./myapp.py -l 4  # OK
-./myapp.py -l quatre  # Will not work, level needs to be an integer
+$ ./myapp.py -l 4  # OK
+$ ./myapp.py -l quatre  # Will not work, level needs to be an integer
 
 # Boolean option does not need argument, its value will be switched
-./myapp.py -d
+$ ./myapp.py -d
 ```
 
 Complex configuration scheme
@@ -154,7 +154,7 @@ suboptions:
   param1: value1
   param2: value2
 """
-conf = pyonf(defaulf_configuration)
+conf = pyonf(default_configuration)
 print(conf)
 ```
 
@@ -171,7 +171,7 @@ password: changeme
 debug: false
 level: 3
 """
-conf = pyonf(defaulf_configuration, mandatory_opts = ['user', 'password'])
+conf = pyonf(default_configuration, mandatory_opts = ['user', 'password'])
 print(conf)
 ```
 

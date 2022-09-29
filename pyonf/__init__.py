@@ -105,6 +105,9 @@ def pyonf(default_conf={}, mandatory_opts=[], argv=None, as_global_vars=False):
 
     """
 
+    if not argv:
+        argv = sys.argv[1:]
+
     conf = {}
     file_conf = {}
     cli_conf = {}
