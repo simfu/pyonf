@@ -83,7 +83,7 @@ class ListAction(argparse.Action):
         setattr(namespace, self.dest, yaml.safe_load("[" + values + "]"))
 
 
-def pyonf(default_conf={}, mandatory_opts=[], argv=sys.argv[1:]):
+def pyonf(default_conf={}, mandatory_opts=[], argv=None, as_global_vars=False):
     """
         Build command line and configuration parser from a default config.
 
@@ -97,6 +97,8 @@ def pyonf(default_conf={}, mandatory_opts=[], argv=sys.argv[1:]):
         :param mandatory_opts: List of options that must be defined by user
                                (none by default)
         :param argv:           List of arguments to parse
+                               (sys.argv[1:] by default)
+        :param as_global_vars: Convert parsed configuration to global variables
                                (sys.argv[1:] by default)
         :return:               New configuration after parsing
 
@@ -246,5 +248,9 @@ def pyonf(default_conf={}, mandatory_opts=[], argv=sys.argv[1:]):
         ]:
             print('Error: "%s" option is not set' % mopt, file=sys.stderr)
             sys.exit(1)
+
+    if as_global_vars:
+        import __main__
+        vars(__main__).update(**conf)
 
     return conf

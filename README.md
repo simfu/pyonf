@@ -64,6 +64,7 @@ Options:
     of \...), mandatory options
 -   Default configuration can be provided as Python dict object, YAML
     string or YAML file
+-   Configuration can be converted to global variables
 -   Compatible with Python 2 & 3
 
 
@@ -178,4 +179,22 @@ you have to define user and password option:
 ```
 $ ./my_app.py
 Error: "user" option is not set
+```
+
+Convert parsed configuration to global variables:
+```
+default_configuration = """
+user: foo
+password: changeme
+debug: false
+level: 3
+"""
+pyonf(default_configuration, as_global_vars=True)
+print(user, password)
+```
+
+i.e.:
+```
+$ ./myapp.py -p secret
+foo secret
 ```
